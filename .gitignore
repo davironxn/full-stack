@@ -1,0 +1,17 @@
+# dependencies
+node_modules/
+
+# Next / build
+.next/
+out/
+
+# pnpm store (optional)
+.pnpm-store/
+
+# environment
+.env
+.env.local
+
+# editor / OS
+.vscode/
+.DS_Store

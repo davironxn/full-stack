@@ -1,0 +1,20 @@
+import React from 'react';
+
+const AboutPage = () => {
+    return (
+        <div className="container mx-auto p-4">
+            <h1 className="text-4xl font-bold mb-4">About Me</h1>
+            <p className="mb-4">
+                I am a passionate web developer with experience in building dynamic and responsive web applications. My journey in web development began with a fascination for technology and a desire to create impactful digital experiences.
+            </p>
+            <p className="mb-4">
+                I specialize in using modern frameworks and libraries such as Next.js, React, and Tailwind CSS to deliver high-quality products. I enjoy collaborating with clients to understand their needs and translate them into functional and aesthetically pleasing websites.
+            </p>
+            <p>
+                In my spare time, I love exploring new technologies, contributing to open-source projects, and sharing my knowledge through blogging and mentoring.
+            </p>
+        </div>
+    );
+};
+
+export default AboutPage;

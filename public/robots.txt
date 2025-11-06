@@ -1,0 +1,8 @@
+User provided coding instructions have been noted. Here are the contents for the file:
+
+/portfolio-nextjs-shadcn/portfolio-nextjs-shadcn/public/robots.txt
+
+User-agent: *
+Disallow: /dashboard
+Disallow: /api
+Allow: /
