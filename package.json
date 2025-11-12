@@ -65,7 +65,7 @@
     "eslint-config-next": "latest",
     "postcss": "^8.5.6",
     "prettier": "latest",
-    "prisma": "6.18.0",
+    "prisma": "6.19.0",
     "tailwindcss": "^4.1.16",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",

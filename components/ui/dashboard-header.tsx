@@ -50,8 +50,8 @@ export const DashboardHeader = memo(
     isRefreshing,
   }: DashboardHeaderProps) => {
     return (
-      <header className="bg-background/95 sticky top-0 z-50 flex h-16 w-full shrink-0 items-center gap-2 border-b backdrop-blur transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-        <div className="flex items-center gap-2 px-4">
+      <header className="bg-background/95 sticky top-0 z-50 w-full shrink-0 border-b backdrop-blur transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 py-2 sm:py-0">
+        <div className="flex items-start sm:items-center gap-2 px-4 w-full">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <div className="flex flex-col">

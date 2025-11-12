@@ -1,12 +1,10 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // Optional: for migrations on some hosted Postgres providers you may need a shadow DB:
-  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
 }
 
 model Project {
@@ -21,7 +19,6 @@ model Project {
   updatedAt   DateTime @updatedAt
 }
 
-
 model Contact {
   id        Int      @id @default(autoincrement())
   name      String
@@ -32,23 +29,20 @@ model Contact {
   createdAt DateTime @default(now())
 }
 
-// Models required by NextAuth Prisma Adapter
-// Source: https://next-auth.js.org/adapters/prisma
 model Account {
-  id                 Int       @id @default(autoincrement())
-  userId             Int
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?
-  access_token       String?
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?
-  session_state      String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                Int     @id @default(autoincrement())
+  userId            Int
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -58,8 +52,7 @@ model Session {
   sessionToken String   @unique
   userId       Int
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
@@ -68,11 +61,12 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  password      String?   // hashed password for credentials auth
+  password      String?
   isAdmin       Boolean   @default(false)
-
-  accounts Account[]
-  sessions Session[]
+  createdAt     DateTime?
+  updatedAt     DateTime?
+  accounts      Account[]
+  sessions      Session[]
 }
 
 model VerificationToken {

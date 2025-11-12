@@ -22,6 +22,7 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 
 export function LoginForm({ className, ...props }: ComponentProps<"div">) {
   const router = useRouter();
@@ -32,11 +33,21 @@ export function LoginForm({ className, ...props }: ComponentProps<"div">) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const callbackUrl = searchParams.get("callbackUrl") ?? undefined;
+  const toast = useToast();
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
     setError(null);
+
+    // client-side validation to avoid empty submissions
+    if (!email || !password) {
+      const msg = "Please enter both email and password.";
+      setError(msg);
+      toast.push({ title: "Missing fields", description: msg, variant: "error" });
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const response = await signIn("credentials", {
@@ -47,7 +58,11 @@ export function LoginForm({ className, ...props }: ComponentProps<"div">) {
       });
 
       if (response?.error) {
-        setError(response.error);
+        // map common next-auth error to friendly message
+        const err = response.error;
+        const friendly = err === "CredentialsSignin" ? "Incorrect sign-in details" : err;
+        setError(friendly);
+        toast.push({ title: "Sign in failed", description: friendly, variant: "error" });
         return;
       }
 

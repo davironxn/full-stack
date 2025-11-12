@@ -13,6 +13,9 @@ import { RecentActivity } from "@/components/ui/recent-activity";
 import { SystemStatus } from "@/components/ui/system-status";
 import { Project } from "@prisma/client";
 import { normalizeProjects } from "@/lib/normalizeProject";
+import { useToast } from "@/components/ui/toast";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { ProjectForm } from './_components/project-form';
 
 
 
@@ -27,6 +30,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
+  const toast = useToast();
 
   // ✅ Auto-refresh projects every 30 seconds
   const {
@@ -106,9 +110,12 @@ const dashboardProjects = normalizeProjects(projects)
   };
 
   const handleAddProject = async () => {
-    console.log("Preparing new project entry...");
-    await mutate(); // auto-refresh after a new project is added
+    // open project creation sheet (ProjectForm handles creation)
+    setShowForm(true);
   };
+
+  // Sheet open state for project form
+  const [showForm, setShowForm] = useState(false);
 
   if (isLoading) {
     return (
@@ -172,6 +179,22 @@ const dashboardProjects = normalizeProjects(projects)
           </div>
         </div>
       </div>
+      {/* Project creation sheet */}
+      <Sheet open={showForm} onOpenChange={setShowForm}>
+    <SheetContent side="right" className="sm:max-w-2xl w-full">
+          <SheetHeader>
+            <SheetTitle>Create project</SheetTitle>
+          </SheetHeader>
+          <div className="p-4">
+            <ProjectForm
+              onSuccess={async () => {
+                setShowForm(false);
+                await mutate();
+              }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }

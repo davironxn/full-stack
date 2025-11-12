@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/toast';
 
 const initialForm = {
   title: '',
@@ -17,8 +19,11 @@ type FormState = typeof initialForm;
 
 type StatusMessage = { tone: 'success' | 'error'; message: string } | null;
 
-export function ProjectForm() {
+export function ProjectForm({ onSuccess }: { onSuccess?: () => void }) {
+  const toast = useToast();
   const [form, setForm] = useState<FormState>(initialForm);
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<StatusMessage>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -29,31 +34,116 @@ export function ProjectForm() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] ?? null;
+    if (!f) {
+      setFile(null);
+      return;
+    }
+
+    // Validate type
+    if (!f.type.startsWith('image/')) {
+      toast.push({ title: 'Invalid file', description: 'Only image files are allowed.', variant: 'error' });
+      setFile(null);
+      return;
+    }
+
+    // Validate size (max 5MB)
+    const MAX_BYTES = 5 * 1024 * 1024;
+    if (f.size > MAX_BYTES) {
+      toast.push({ title: 'File too large', description: 'Max file size is 5 MB.', variant: 'error' });
+      setFile(null);
+      return;
+    }
+
+    setFile(f);
+  };
+
+  // preview effect
+  useEffect(() => {
+    if (!file) {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+      }
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [file]);
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSaving(true);
     setStatus(null);
 
     try {
-      const response = await fetch('/api/projects', {
+      // Build multipart/form-data payload using FormData
+      const fd = new FormData();
+      fd.append('title', form.title);
+      fd.append('slug', form.slug);
+      fd.append('description', form.description);
+      if (form.url) fd.append('url', form.url);
+      const tagsArray = form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [];
+      fd.append('tags', JSON.stringify(tagsArray));
+      if (file) {
+        fd.append('image', file, file.name);
+      } else if (form.imageUrl) {
+        fd.append('imageUrl', form.imageUrl);
+      }
+
+      const response = await fetch('/api/admin/projects', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: fd,
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data?.error ?? 'Unable to save project');
+        // Try to parse JSON body, fallback to text for helpful debugging
+        let parsed: any = null;
+        try {
+          parsed = await response.json();
+        } catch (e) {
+          try {
+            parsed = { text: await response.text() };
+          } catch (e2) {
+            parsed = null;
+          }
+        }
+
+        const serverMessage = parsed?.error ?? parsed?.message ?? parsed?.text ?? null;
+        const errMsg = `Request failed: ${response.status} ${response.statusText}${serverMessage ? ' — ' + serverMessage : ''}`;
+        console.error('Project create failed', { status: response.status, statusText: response.statusText, body: parsed });
+        toast.push({ title: 'Create failed', description: serverMessage ?? `Status ${response.status}`, variant: 'error' });
+        setStatus({ tone: 'error', message: errMsg });
+        setIsSaving(false);
+        return;
       }
 
       setForm(initialForm);
+      // clear uploaded file + preview
+      setFile(null);
+      if (previewUrl) {
+        try {
+          URL.revokeObjectURL(previewUrl);
+        } catch {}
+        setPreviewUrl(null);
+      }
       setStatus({ tone: 'success', message: 'Project saved to portfolio.' });
+      toast.push({ title: 'Project created', description: 'Project was published', variant: 'success' });
+      onSuccess?.();
     } catch (error) {
       setStatus({
         tone: 'error',
         message:
           error instanceof Error ? error.message : 'Something went wrong. Please try again.',
       });
+      console.error('Project create exception', error);
+      toast.push({ title: 'Create failed', description: (error instanceof Error ? error.message : 'Server error'), variant: 'error' });
     } finally {
       setIsSaving(false);
     }
@@ -144,6 +234,25 @@ export function ProjectForm() {
           onChange={handleChange}
           placeholder="https://images.unsplash.com/..."
         />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium" htmlFor="image">Cover image file</label>
+        <input
+          id="image"
+          name="image"
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="block w-full text-sm text-foreground"
+        />
+        <p className="text-xs text-muted-foreground">You can upload an image file instead of providing a URL. Max 5 MB.</p>
+
+        {previewUrl ? (
+          <div className="pt-2">
+            <img src={previewUrl} alt="preview" className="max-h-40 rounded-md object-cover" />
+          </div>
+        ) : null}
       </div>
 
       <div className="flex items-center justify-between gap-3">
